@@ -1,18 +1,177 @@
-<div class="item-card" style="flex-direction: column; gap: 10px;">
-    <div style="text-align: center;">
-        <strong>نظام الإحالة 👥</strong><br>
-        <small>احصل على 20,000 عملة لكل صديق!</small>
-    </div>
-    <button class="btn-action" style="width: 100%;" onclick="shareInvite()">دعوة صديق</button>
-</div>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Beot Mining - Ultimate Edition</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #f1c40f; --bg-color: #0a0a0a; --card-bg: #1a1a1a; --text-main: #ffffff; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; user-select: none; }
+        
+        /* الهيدر العلوي */
+        .header-stats { display: flex; justify-content: space-around; background: #111; padding: 10px; border-bottom: 1px solid #333; }
+        .stat-item { text-align: center; font-size: 11px; color: #888; }
+        .stat-item span { display: block; color: var(--primary-color); font-weight: bold; font-size: 13px; }
 
-<script>
-// أضف هذه الدالة داخل سكريبت الـ HTML
-function shareInvite() {
-    const user_id = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "0";
-    const ref_link = `https://t.me/Beotmining_bot?start=${user_id}`;
-    const share_text = encodeURIComponent(`💰 انضم إلي في بوت Beot Mining وابدأ بجمع العملات مجاناً!\nاستخدم رابطي للحصول على هدية بداية: `);
-    
-    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(ref_link)}&text=${share_text}`);
-}
-</script>
+        .page { display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; padding-top: 20px; overflow-y: auto; padding-bottom: 110px; }
+        .page.active { display: flex; }
+
+        /* العملة والمستوى */
+        .league-badge { background: #222; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin-bottom: 10px; border: 1px solid var(--primary-color); }
+        .score-box { font-size: 40px; font-weight: 800; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .score-box img { width: 40px; }
+        .main-coin { width: 230px; height: 230px; border-radius: 50%; box-shadow: 0 0 40px rgba(241, 196, 15, 0.2); transition: transform 0.1s; cursor: pointer; }
+        .main-coin:active { transform: scale(0.92) rotate(2deg); }
+
+        /* البطاقات والأزرار */
+        .item-card { background: var(--card-bg); border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; width: 90%; border: 1px solid #333; }
+        .btn-action { background: var(--primary-color); color: #000; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .input-box { width: 85%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #000; color: #fff; margin-bottom: 15px; text-align: center; }
+
+        /* قائمة التنقل */
+        .nav-menu { position: fixed; bottom: 15px; width: 94%; left: 3%; background: var(--card-bg); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 20px; border: 1px solid #333; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 11px; cursor: pointer; }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item i { font-size: 18px; margin-bottom: 4px; }
+
+        /* تأثيرات بصرية */
+        .float-text { position: absolute; color: white; font-size: 26px; font-weight: bold; pointer-events: none; animation: floatUp 0.7s forwards; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
+        .energy-bar-wrap { width: 85%; margin-top: auto; margin-bottom: 20px; }
+        .bar-bg { width: 100%; height: 10px; background: #333; border-radius: 10px; margin-top: 5px; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #f1c40f, #e67e22); border-radius: 10px; width: 100%; transition: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <div class="header-stats">
+        <div class="stat-item">ربح ساعة<span id="p-hour">0</span></div>
+        <div class="stat-item">بالضغطة<span id="p-tap">1</span></div>
+        <div class="stat-item">المستوى<span id="league-name">برونزي</span></div>
+    </div>
+
+    <div id="mine-page" class="page active">
+        <div class="league-badge">الرتبة الحالية 🏆</div>
+        <div class="score-box"><img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"><span id="score">0</span></div>
+        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" class="main-coin" id="coin-btn">
+        <div class="energy-bar-wrap">
+            <div style="display:flex; justify-content:space-between; font-size:12px;"><span>⚡ <span id="energy-val">1000</span>/1000</span><span>الطاقة</span></div>
+            <div class="bar-bg"><div id="energy-fill" class="bar-fill"></div></div>
+        </div>
+    </div>
+
+    <div id="shop-page" class="page">
+        <h3>المتجر والتطوير 🚀</h3>
+        <div class="item-card"><div><strong>مزرعة آليّة</strong><br><small>+500 ربح/ساعة</small><br><small>السعر: <span id="farm-price">2000</span></small></div><button class="btn-action" onclick="buyUpgrade('farm')">شراء</button></div>
+        <div class="item-card"><div><strong>مطرقة ثقيلة</strong><br><small>+1 لكل ضغطة</small><br><small>السعر: <span id="tap-price">1000</span></small></div><button class="btn-action" onclick="buyUpgrade('tap')">شراء</button></div>
+    </div>
+
+    <div id="tasks-page" class="page">
+        <h3>مهام الأصدقاء 👥</h3>
+        <div class="item-card"><div style="text-align:right"><strong>رابط الإحالة</strong><br><small>+20,000 عن كل صديق</small></div><button class="btn-action" onclick="shareRef()">دعوة</button></div>
+        <div class="item-card"><div style="text-align:right"><strong>هدية يومية</strong><br><small>+5,000 عملة</small></div><button class="btn-action" onclick="claimDaily()">استلام</button></div>
+    </div>
+
+    <div id="withdraw-page" class="page">
+        <h3>سحب الأرباح 🏦</h3>
+        <p style="font-size:13px; color:#888;">الحد الأدنى: 1,000,000 عملة</p>
+        <input type="text" id="wallet-addr" class="input-box" placeholder="عنوان محفظة TON">
+        <button class="btn-action" style="width:85%" onclick="requestWithdraw()">تأكيد السحب</button>
+    </div>
+
+    <nav class="nav-menu">
+        <div class="nav-item active" onclick="showPage('mine-page', this)"><i class="fas fa-hammer"></i><span>تعدين</span></div>
+        <div class="nav-item" onclick="showPage('shop-page', this)"><i class="fas fa-store"></i><span>متجر</span></div>
+        <div class="nav-item" onclick="showPage('tasks-page', this)"><i class="fas fa-users"></i><span>أصدقاء</span></div>
+        <div class="nav-item" onclick="showPage('withdraw-page', this)"><i class="fas fa-wallet"></i><span>سحب</span></div>
+    </nav>
+
+    <script>
+        const tg = window.Telegram.WebApp; tg.expand();
+        let score = parseFloat(localStorage.getItem('score')) || 0;
+        let p_hour = parseInt(localStorage.getItem('p_hour')) || 0;
+        let tap_lvl = parseInt(localStorage.getItem('tap_lvl')) || 1;
+        let farm_lvl = parseInt(localStorage.getItem('farm_lvl')) || 0;
+        let energy = 1000;
+
+        function updateUI() {
+            document.getElementById('score').innerText = Math.floor(score).toLocaleString();
+            document.getElementById('p-hour').innerText = "+" + p_hour;
+            document.getElementById('p-tap').innerText = "+" + tap_lvl;
+            document.getElementById('energy-val').innerText = energy;
+            document.getElementById('energy-fill').style.width = (energy/10) + "%";
+            document.getElementById('farm-price').innerText = ((farm_lvl+1)*2000).toLocaleString();
+            document.getElementById('tap-price').innerText = (tap_lvl*1000).toLocaleString();
+            
+            // نظام المستويات
+            const lName = document.getElementById('league-name');
+            if(score < 50000) { lName.innerText = "برونزي 🥉"; lName.style.color = "#cd7f32"; }
+            else if(score < 500000) { lName.innerText = "فضي 🥈"; lName.style.color = "#c0c0c0"; }
+            else { lName.innerText = "ذهبي 🥇"; lName.style.color = "#f1c40f"; }
+
+            localStorage.setItem('score', score);
+            localStorage.setItem('p_hour', p_hour);
+            localStorage.setItem('tap_lvl', tap_lvl);
+            localStorage.setItem('farm_lvl', farm_lvl);
+        }
+
+        document.getElementById('coin-btn').addEventListener('touchstart', (e) => {
+            if(energy >= tap_lvl) {
+                score += tap_lvl; energy -= tap_lvl; updateUI();
+                tg.HapticFeedback.impactOccurred('medium');
+                createFloatText(e.touches[0].clientX, e.touches[0].clientY, "+"+tap_lvl);
+            }
+        });
+
+        function createFloatText(x, y, t) {
+            const el = document.createElement('div'); el.className = 'float-text';
+            el.innerText = t; el.style.left = x+'px'; el.style.top = y+'px';
+            document.body.appendChild(el); setTimeout(()=> el.remove(), 700);
+        }
+
+        function buyUpgrade(type) {
+            if(type === 'farm') {
+                let p = (farm_lvl+1)*2000;
+                if(score >= p) { score-=p; farm_lvl++; p_hour+=500; updateUI(); }
+            } else {
+                let p = tap_lvl*1000;
+                if(score >= p) { score-=p; tap_lvl++; updateUI(); }
+            }
+        }
+
+        function showPage(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function shareRef() {
+            const id = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "0";
+            tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/Beotmining_bot?start=${id}&text=انضم وابدأ التعدين معي!`);
+        }
+
+        function requestWithdraw() {
+            let addr = document.getElementById('wallet-addr').value;
+            if(score < 1000000) return alert("الحد الأدنى مليون عملة!");
+            if(addr.length < 10) return alert("أدخل عنوان صحيح!");
+            tg.sendData(JSON.stringify({action: "withdraw", wallet: addr, amount: score}));
+        }
+
+        function claimDaily() {
+            let last = localStorage.getItem('last_claim') || 0;
+            if(Date.now() - last > 86400000) {
+                score += 5000; localStorage.setItem('last_claim', Date.now()); updateUI(); alert("استلمت 5,000!");
+            } else alert("عد غداً!");
+        }
+
+        // الربح التلقائي واستعادة الطاقة
+        setInterval(() => { if(p_hour > 0) { score += (p_hour/3600); updateUI(); } }, 1000);
+        setInterval(() => { if(energy < 1000) { energy += 1; updateUI(); } }, 2000);
+        
+        updateUI();
+    </script>
+</body>
+</html>
