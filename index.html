@@ -1,111 +1,18 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Beot Mining Bot - All in One</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --primary-color: #f1c40f; --bg-color: #000; --card-bg: #151515; }
-        body { background: var(--bg-color); color: #fff; font-family: sans-serif; margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        .page { display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; padding-top: 20px; overflow-y: auto; padding-bottom: 120px; }
-        .page.active { display: flex; }
-        .score-box { font-size: 40px; font-weight: bold; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .score-box img { width: 40px; }
-        .main-coin { width: 220px; height: 220px; border-radius: 50%; box-shadow: 0 0 30px var(--primary-color); transition: 0.1s; cursor: pointer; margin-top: 50px; }
-        .main-coin:active { transform: scale(0.92); }
-        .item-card { background: var(--card-bg); border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; width: 85%; border: 1px solid #333; }
-        .btn-action { background: var(--primary-color); color: #000; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .nav-menu { position: fixed; bottom: 15px; width: 92%; left: 4%; background: var(--card-bg); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 20px; border: 1px solid #333; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 11px; cursor: pointer; }
-        .nav-item.active { color: var(--primary-color); }
-        .energy-bar { width: 85%; height: 10px; background: #333; border-radius: 10px; margin-top: auto; margin-bottom: 120px; }
-        .energy-fill { height: 100%; background: var(--primary-color); border-radius: 10px; transition: 0.3s; }
-    </style>
-</head>
-<body>
-
-    <div id="mine-page" class="page active">
-        <div class="score-box"><img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"><span id="score">0</span></div>
-        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" class="main-coin" id="coin-btn">
-        <div class="energy-bar"><div id="energy-fill" class="energy-fill" style="width: 100%;"></div></div>
+<div class="item-card" style="flex-direction: column; gap: 10px;">
+    <div style="text-align: center;">
+        <strong>نظام الإحالة 👥</strong><br>
+        <small>احصل على 20,000 عملة لكل صديق!</small>
     </div>
+    <button class="btn-action" style="width: 100%;" onclick="shareInvite()">دعوة صديق</button>
+</div>
 
-    <div id="tasks-page" class="page">
-        <h2>الهدايا والمهام</h2>
-        <div class="item-card"><button id="daily-btn" class="btn-action" onclick="claimDaily()">استلام</button><div>الهدية اليومية<br><small>+5,000</small></div></div>
-        <div class="item-card"><button class="btn-action" onclick="doTask(1, 10000, 'https://t.me/AirdroopCryptoo')">اشتراك</button><div>قناتنا الرسمية<br><small>+10,000</small></div></div>
-    </div>
-
-    <div id="shop-page" class="page">
-        <h2>المتجر</h2>
-        <div class="item-card"><button class="btn-action" onclick="buyBoost('tap')">تطوير</button><div>قوة الضغطة (Lvl <span id="tap-lvl">1</span>)<br><small id="tap-price">1,000</small></div></div>
-    </div>
-
-    <div id="withdraw-page" class="page">
-        <h2>سحب الأرباح</h2>
-        <input type="text" id="wallet" placeholder="عنوان محفظة TON" style="width:80%; padding:10px; margin-bottom:10px;">
-        <button class="btn-action" style="width:85%" onclick="withdraw()">طلب سحب</button>
-    </div>
-
-    <nav class="nav-menu">
-        <div class="nav-item active" onclick="showPage('mine-page', this)"><i class="fas fa-hammer"></i><span>تعدين</span></div>
-        <div class="nav-item" onclick="showPage('tasks-page', this)"><i class="fas fa-gift"></i><span>مهام</span></div>
-        <div class="nav-item" onclick="showPage('shop-page', this)"><i class="fas fa-rocket"></i><span>تطوير</span></div>
-        <div class="nav-item" onclick="showPage('withdraw-page', this)"><i class="fas fa-wallet"></i><span>سحب</span></div>
-    </nav>
-
-    <script>
-        const tg = window.Telegram.WebApp; tg.expand();
-        let score = parseInt(localStorage.getItem('score')) || 0;
-        let tapLvl = parseInt(localStorage.getItem('tapLvl')) || 1;
-        let energy = 1000;
-
-        function updateUI() {
-            document.getElementById('score').innerText = score.toLocaleString();
-            document.getElementById('tap-lvl').innerText = tapLvl;
-            document.getElementById('tap-price').innerText = (tapLvl * 1000).toLocaleString();
-            document.getElementById('energy-fill').style.width = (energy / 10) + "%";
-            localStorage.setItem('score', score);
-            localStorage.setItem('tapLvl', tapLvl);
-        }
-
-        document.getElementById('coin-btn').addEventListener('touchstart', (e) => {
-            if(energy >= tapLvl) {
-                score += tapLvl; energy -= tapLvl; updateUI();
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        });
-
-        function showPage(pId, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pId).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        function buyBoost(type) {
-            let price = tapLvl * 1000;
-            if(score >= price) { score -= price; tapLvl++; updateUI(); alert("تم التطوير!"); }
-        }
-
-        function claimDaily() {
-            let last = localStorage.getItem('lastClaim') || 0;
-            if(Date.now() - last > 86400000) {
-                score += 5000; localStorage.setItem('lastClaim', Date.now()); updateUI(); alert("استلمت 5,000!");
-            } else { alert("عد غداً!"); }
-        }
-
-        function withdraw() {
-            let addr = document.getElementById('wallet').value;
-            if(score >= 1000000 && addr.length > 5) {
-                tg.sendData(JSON.stringify({action: 'withdraw', amount: score, wallet: addr}));
-            } else { alert("الحد الأدنى 1,000,000 عملة!"); }
-        }
-
-        setInterval(() => { if(energy < 1000) { energy += 1; updateUI(); } }, 1500);
-        updateUI();
-    </script>
-</body>
-</html>
+<script>
+// أضف هذه الدالة داخل سكريبت الـ HTML
+function shareInvite() {
+    const user_id = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "0";
+    const ref_link = `https://t.me/Beotmining_bot?start=${user_id}`;
+    const share_text = encodeURIComponent(`💰 انضم إلي في بوت Beot Mining وابدأ بجمع العملات مجاناً!\nاستخدم رابطي للحصول على هدية بداية: `);
+    
+    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(ref_link)}&text=${share_text}`);
+}
+</script>
