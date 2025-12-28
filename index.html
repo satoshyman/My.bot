@@ -2,182 +2,54 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Orexn App Clone Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTV Premium - @Beotmining_bot</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --bg-black: #000000;
-            --card-dark: #121212;
-            --accent-pink: #ff0055;
-            --btn-blue: #007aff;
-            --text-gray: #a0a0a0;
-            --ton-blue: #0098ea;
+            --primary: #5865f2;
+            --accent: #4ade80;
+            --gold: #ffcc00;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         body {
-            background-color: var(--bg-black);
-            color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #050505;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 15px;
             text-align: center;
+            background: radial-gradient(circle at top right, #1a1a2e, #050505);
+            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* Profile Header */
-        .profile-header { padding: 20px 0; display: flex; flex-direction: column; align-items: center; }
-        .user-pill { background: #1a1a1a; padding: 6px 16px; border-radius: 25px; display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 25px; border: 1px solid #222; }
-        .user-pill img { width: 24px; height: 24px; border-radius: 50%; }
-        .verified-badge { color: #0098ea; font-size: 12px; }
+        /* تنسيق البطاقات الزجاجية الشفافة */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
 
-        .main-balance { margin-bottom: 10px; }
-        .main-balance h1 { font-size: 52px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 800; }
-        .main-balance span { font-size: 20px; color: var(--text-gray); font-weight: 400; }
-        .rank-tag { color: var(--text-gray); font-size: 16px; margin-top: 5px; font-weight: 500; }
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            font-size: 1rem;
+        }
 
-        /* Farm Card (Image 1) */
-        .farm-container { background: var(--card-dark); margin: 15px; border-radius: 24px; padding: 20px; text-align: right; border: 1px solid #1f1f1f; position: relative; }
-        .farm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .farm-header span { display: flex; align-items: center; gap: 8px; font-size: 15px; }
-        .status-ready { color: #ffcc00; font-size: 13px; font-weight: bold; }
-
-        .farm-amount { font-size: 42px; font-weight: bold; margin: 15px 0; }
-        .farm-amount span { font-size: 18px; color: var(--text-gray); }
-
-        .data-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 15px; }
-        .val-white { color: white; font-weight: bold; }
-        .val-pink { color: var(--accent-pink); font-weight: bold; }
-
-        .main-action-btn { background: var(--accent-pink); color: white; border: none; width: 100%; padding: 18px; border-radius: 18px; font-size: 18px; font-weight: bold; margin-top: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-
-        /* Quick Actions Grid */
-        .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 15px; }
-        .action-box { background: var(--card-dark); border-radius: 20px; padding: 15px 5px; border: 1px solid #1f1f1f; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .action-box img { width: 35px; height: 35px; object-fit: contain; }
-        .action-box span { color: var(--text-gray); font-size: 13px; }
-
-        /* Spin & Win (Image 2) */
-        .spin-page { display: none; padding: 20px; }
-        .spin-title { font-size: 32px; font-weight: 800; margin-bottom: 5px; }
-        .spin-sub { color: var(--text-gray); font-size: 14px; margin-bottom: 25px; }
-        .spins-available { background: #1a1a1a; padding: 8px 20px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 30px; }
-
-        /* Wheel Styles */
-        .wheel-wrap { position: relative; width: 320px; height: 320px; margin: 0 auto; }
-        #wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid #2d333b; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); background: #1c2128; }
-        .wheel-pointer { position: absolute; top: -5px; left: 50%; transform: translateX(-50%); z-index: 10; width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 25px solid #ff0055; rotate: 180deg; }
-        .wheel-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; background: var(--accent-pink); border-radius: 50%; z-index: 5; border: 4px solid #1c2128; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; box-shadow: 0 0 20px rgba(255,0,85,0.4); }
-        
-        .slice { position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%; display: flex; align-items: center; justify-content: center; border: 0.5px solid rgba(255,255,255,0.05); }
-        .slice-content { transform: rotate(22.5deg) translateY(-85px); display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: bold; }
-        .slice-content i, .slice-content img { font-size: 18px; margin-bottom: 5px; }
-
-        .buy-spins { position: fixed; bottom: 100px; left: 5%; width: 90%; background: var(--btn-blue); color: white; border: none; padding: 18px; border-radius: 15px; font-size: 16px; font-weight: bold; }
-
-        /* Bottom Navbar */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #000; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-around; padding: 12px 0 30px; }
-        .nav-item { color: var(--text-gray); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex: 1; transition: 0.2s; }
-        .nav-item.active { color: white; }
-        .nav-item i { font-size: 22px; }
-
-        .active-page { display: block !important; }
-    </style>
-</head>
-<body>
-
-    <div id="farm-page" class="page active-page">
-        <div class="profile-header">
-            <div class="user-pill">
-                <img src="https://via.placeholder.com/100" id="user-img">
-                <span id="user-name">egipcioman</span>
-                <i class="fas fa-check-circle verified-badge"></i>
-                <span style="color:#0098ea">Verified</span>
-            </div>
-            <div class="main-balance">
-                <h1 id="display-total">100,128 <span>OXN</span></h1>
-                <div class="rank-tag"><i class="fas fa-crown"></i> Silver</div>
-            </div>
-        </div>
-
-        <div class="farm-container">
-            <div class="farm-header">
-                <span><i class="fas fa-coins" style="color:#f3ba2f"></i> Farming Status</span>
-                <span class="status-ready" id="claim-status">● Claim Ready</span>
-            </div>
-            <div class="farm-amount" id="current-farming">192 <span>OXN</span></div>
-            <div class="data-row"><span>📈 Hourly Rate</span><span class="val-pink">32 OXN/hr</span></div>
-            <div class="data-row"><span>🕒 Claim Period</span><span class="val-white">Every 6 hours</span></div>
-            <button class="main-action-btn" onclick="claimOXN()"><i class="fas fa-sparkles"></i> Claim Rewards</button>
-        </div>
-
-        <div class="quick-actions">
-            <div class="action-box">
-                <i class="fas fa-sack-dollar" style="color:gold; font-size:28px;"></i>
-                <span>Rewards</span>
-            </div>
-            <div class="action-box">
-                <i class="fas fa-bolt" style="color:#ffcc00; font-size:28px;"></i>
-                <span>Earn</span>
-            </div>
-            <div class="action-box" onclick="showPage('spin-page')">
-                <i class="fas fa-gamepad" style="color:#a0a0a0; font-size:28px;"></i>
-                <span>Spin</span>
-            </div>
-        </div>
-    </div>
-
-    <div id="spin-page" class="page">
-        <div class="spin-page active-page">
-            <div class="spin-title">Spin & Win</div>
-            <div class="spin-sub">Spin the wheel to win crypto prizes!</div>
-            <div class="spins-available">🎫 1 Spins Available</div>
-
-            <div class="wheel-wrap">
-                <div class="wheel-pointer"></div>
-                <div class="wheel-center" onclick="startSpin()">SPIN</div>
-                <div id="wheel"></div>
-            </div>
-
-            <button class="buy-spins">Buy More Spins</button>
-        </div>
-    </div>
-
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="showPage('farm-page')"><i class="fas fa-ghost"></i><span>FARM</span></div>
-        <div class="nav-item" onclick="tg.showAlert('Coming Soon')"><i class="fas fa-tasks"></i><span>TASKS</span></div>
-        <div class="nav-item" onclick="tg.showAlert('Coming Soon')"><i class="fas fa-chart-bar"></i><span>LEADERS</span></div>
-        <div class="nav-item" onclick="tg.showAlert('Coming Soon')"><i class="fas fa-user-friends"></i><span>FRIENDS</span></div>
-        <div class="nav-item" onclick="tg.showAlert('Coming Soon')"><i class="fas fa-coins"></i><span>TOKEN</span></div>
-    </nav>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        let totalOxn = parseFloat(localStorage.getItem('oxn_t')) || 100128;
-        let lastClaim = parseInt(localStorage.getItem('oxn_lc')) || 0;
-
-        // إعداد بيانات عجلة الحظ (تطابق الصورة 2)
-        const prizes = [
-            {t: "0.05 TON", i: "fa-gem"}, {t: "500 OXN", i: "fa-coins"},
-            {t: "20 STARS", i: "fa-star"}, {t: "0.1 TON", i: "fa-gem"},
-            {t: "1000 OXN", i: "fa-coins"}, {t: "1 SPIN", i: "fa-ticket"},
-            {t: "2800 OXN", i: "fa-coins"}, {t: "0.4 TON", i: "fa-gem"}
-        ];
-
-        function initWheel() {
-            const wheel = document.getElementById('wheel');
-            prizes.forEach((p, i) => {
-                const slice = document.createElement('div');
-                slice.className = 'slice';
-                slice.style.transform = `rotate(${i * 45}deg)`;
-                slice.style.background = i % 2 === 0 ? '#1c2128' : '#242b33';
-                slice.innerHTML = `
-                    <div class="slice-content">
-                        <i class="fas ${p.i}" style="color:${p.t.includes('TON') ? '#0098ea' : (p.t.includes('STARS') ? '#ffcc00' : '#ff0055')}"></i>
-                        <span>${p.t}</span>
-                    </div>`;
-                wheel.appendChild(slice);
-            });
+        .glass-btn:active { transform: scale(0.96); background: rgba(88, 101, 242, 0.2); }
+        .btn-main { background: var(--primary); border: none; box-shadow: 0 0 15px rgba(88, 1
