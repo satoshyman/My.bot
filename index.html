@@ -3,196 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TON Cloud Pro</title>
+    <title>TON Pro - Mining & Wheel</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --ton-blue: #0088cc; --dark-bg: #0b0e11; --card-bg: #151921; }
-        body { background: var(--dark-bg); color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; text-align: center; user-select: none; }
-        
-        .header { padding: 25px 15px; background: var(--card-bg); border-bottom: 2px solid #1f2630; position: sticky; top: 0; z-index: 1000; }
-        .ton-logo { width: 80px; filter: drop-shadow(0 0 10px var(--ton-blue)); }
-        .balance { font-size: 36px; font-weight: bold; color: var(--ton-blue); margin: 10px 0; letter-spacing: 1px; }
-        
-        .page { display: none; padding: 20px 5% 120px; animation: fadeIn 0.4s ease; }
+        :root {
+            --ton-blue: #0098ea;
+            --gold: #f3ba2f;
+            --bg-dark: #0b0e11;
+            --card-bg: #1c1f24;
+            --text-gray: #848e9c;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* الهيدر */
+        .header {
+            padding: 25px 20px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(0,152,234,0.15) 0%, rgba(0,0,0,0) 100%);
+        }
+
+        .balance-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .balance-container img { width: 45px; height: 45px; }
+        .balance-value { font-size: 40px; font-weight: 800; }
+
+        /* الأقسام */
+        .page { display: none; height: 100vh; padding: 20px; box-sizing: border-box; }
         .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card { background: var(--card-bg); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #232d38; text-align: right; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .btn { background: var(--ton-blue); color: white; border: none; padding: 15px; border-radius: 15px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
-        .btn:disabled { background: #2c353d; color: #5c6c7a; cursor: not-allowed; }
+        /* صفحة التعدين (Mining) */
+        .mining-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60%;
+        }
 
-        /* Wheel Styles */
-        .wheel-container { position: relative; width: 280px; height: 280px; margin: 30px auto; }
-        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #1f2630; background: conic-gradient(#0088cc 0deg 45deg, #090b0e 45deg 90deg, #0088cc 90deg 135deg, #090b0e 135deg 180deg, #0088cc 180deg 225deg, #090b0e 225deg 270deg, #0088cc 270deg 315deg, #090b0e 315deg 360deg); transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); box-shadow: 0 0 40px rgba(0, 136, 204, 0.2); }
-        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #ff4b5c; z-index: 10; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5)); }
+        .main-coin {
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, #232d38 0%, #000 100%);
+            border-radius: 50%;
+            border: 8px solid #1f2630;
+            box-shadow: 0 0 40px rgba(0, 152, 234, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
 
-        .nav { position: fixed; bottom: 15px; width: 92%; left: 4%; background: rgba(21, 25, 33, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 12px 0; border-radius: 25px; border: 1px solid #232d38; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .nav-item { color: #5c6c7a; font-size: 11px; cursor: pointer; transition: 0.3s; }
-        .nav-item.active { color: var(--ton-blue); transform: translateY(-3px); }
+        .main-coin:active { transform: scale(0.95); }
+        .main-coin img { width: 75%; filter: drop-shadow(0 0 15px var(--ton-blue)); }
+
+        .energy-box { width: 85%; margin-top: 35px; }
+        .progress-bar { height: 12px; background: #282e35; border-radius: 10px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--ton-blue), #55edff); width: 100%; transition: width 0.3s; }
+
+        /* صفحة عجلة الحظ (Wheel) */
+        .wheel-container { position: relative; width: 300px; height: 300px; margin: 40px auto; }
+        #wheel {
+            width: 100%; height: 100%; border-radius: 50%; border: 8px solid #1c1f24;
+            background: #151921; position: relative; overflow: hidden;
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+        .segment {
+            position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: bold; color: white;
+        }
+        .pointer {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            z-index: 10; width: 0; height: 0; border-left: 15px solid transparent;
+            border-right: 15px solid transparent; border-top: 25px solid #ff4b5c;
+        }
+
+        /* صفحة المهام (Tasks) */
+        .task-card {
+            background: var(--card-bg); border-radius: 15px; padding: 15px;
+            margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid #2d333b;
+        }
+        .task-info h4 { margin: 0; font-size: 15px; }
+        .task-info span { color: var(--gold); font-size: 13px; font-weight: bold; }
+
+        /* القائمة السفلية */
+        .nav-bar {
+            position: fixed; bottom: 15px; left: 5%; width: 90%;
+            background: #1c1f24; border-radius: 20px; display: flex;
+            justify-content: space-around; padding: 12px 0; border: 1px solid #2d333b;
+        }
+        .nav-item { color: var(--text-gray); text-align: center; font-size: 11px; cursor: pointer; flex: 1; }
+        .nav-item.active { color: var(--ton-blue); }
         .nav-item i { font-size: 20px; margin-bottom: 5px; }
+
+        /* أنيميشن الأرقام */
+        @keyframes floatOut {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-120px); opacity: 0; }
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <img src="https://ton.org/download/ton_symbol.png" class="ton-logo">
-        <div class="balance"><span id="u-bal">0.00000</span> TON</div>
-        <div style="font-size: 13px; color: #8b949e;"><i class="fas fa-shield-alt"></i> الخطة: <span id="p-name">مجانية</span></div>
-    </div>
-
-    <div id="m-pg" class="page active">
-        <div class="card">
-            <h3 style="margin-top:0"><i class="fas fa-microchip"></i> التعدين السحابي</h3>
-            <p id="timer-txt" style="font-size: 28px; text-align: center; color: var(--ton-blue); font-weight: bold; margin: 15px 0;">جاهز للبدء</p>
-            <button class="btn" id="m-btn" onclick="startM()">إبدأ دورة التعدين</button>
-        </div>
-        <div class="card" style="font-size: 14px; line-height: 1.6; color: #a1b0bc;">
-            <i class="fas fa-info-circle"></i> <b>معلومات الخطة:</b><br>
-            • تصل لـ 1 TON خلال 8 أيام (مجاني)<br>
-            • دورة التعدين تتجدد كل 6 ساعات.
-        </div>
-    </div>
-
-    <div id="w-pg" class="page">
-        <div class="card">
-            <h3><i class="fas fa-wallet"></i> طلب سحب</h3>
-            <p style="font-size: 14px;">الحد الأدنى للسحب: <b>1.00 TON</b></p>
-            <button class="btn" onclick="withD()">سحب الأرباح</button>
-        </div>
-        <div class="card">
-            <h3><i class="fas fa-users"></i> الإحالات</h3>
-            <p style="font-size: 14px;">اكسب <b>0.0001 TON</b> عن كل دعوة ناجحة.</p>
-            <button class="btn" style="background:#1f2630" onclick="copyR()">نسخ رابط الدعوة</button>
-        </div>
-    </div>
-
-    <div id="s-pg" class="page">
-        <h3 style="margin-bottom:20px">تطوير سرعة التعدين 🚀</h3>
-        <div class="card">
-            <h4>المستوى 1 <span style="float:left; color:var(--ton-blue)">1$</span></h4>
-            <p style="font-size:13px">تصل للحد الأدنى في <b>6 أيام</b> فقط.</p>
-            <button class="btn" onclick="tg.showAlert('تواصل مع @Admin لترقية المستوى 1')">شراء الترقية</button>
-        </div>
-        <div class="card">
-            <h4>المستوى 2 <span style="float:left; color:var(--ton-blue)">3$</span></h4>
-            <p style="font-size:13px">تصل للحد الأدنى في <b>4 أيام</b> فقط.</p>
-            <button class="btn" onclick="tg.showAlert('تواصل مع @Admin لترقية المستوى 2')">شراء الترقية</button>
-        </div>
-        <div class="card">
-            <h4>المستوى 3 <span style="float:left; color:var(--ton-blue)">5$</span></h4>
-            <p style="font-size:13px">تصل للحد الأدنى في <b>يومين وربع</b>.</p>
-            <button class="btn" onclick="tg.showAlert('تواصل مع @Admin لترقية المستوى 3')">شراء الترقية</button>
-        </div>
-    </div>
-
-    <div id="e-pg" class="page">
-        <div class="card">
-            <h3>عجلة الحظ العالمية 🎡</h3>
-            <div class="wheel-container">
-                <div class="pointer"></div>
-                <div id="wheel" class="wheel"></div>
-            </div>
-            <button class="btn" id="s-btn" onclick="spin()">لف العجلة مجاناً</button>
-        </div>
-        <div class="card">
-            <h3>مهام سريعة</h3>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:13px">تابعنا على تليجرام (+0.00001)</span>
-                <button class="btn" style="width:80px; padding:8px" onclick="doT()">تنفيذ</button>
-            </div>
-        </div>
-    </div>
-
-    <nav class="nav">
-        <div class="nav-item active" onclick="showP('m-pg', this)"><i class="fas fa-hammer"></i><br>تعدين</div>
-        <div class="nav-item" onclick="showP('w-pg', this)"><i class="fas fa-wallet"></i><br>سحب</div>
-        <div class="nav-item" onclick="showP('s-pg', this)"><i class="fas fa-rocket"></i><br>ترقية</div>
-        <div class="nav-item" onclick="showP('e-pg', this)"><i class="fas fa-gift"></i><br>حظ</div>
-    </nav>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
-
-        let bal = parseFloat(localStorage.getItem('t_bal')) || 0;
-        let plan = parseInt(localStorage.getItem('t_plan')) || 0;
-        let lastM = parseInt(localStorage.getItem('t_last_m')) || 0;
-        let lastS = parseInt(localStorage.getItem('t_last_s')) || 0;
-
-        const pData = [
-            { n: "مجانية", r: 1/32 }, { n: "مستوى 1", r: 1/24 },
-            { n: "مستوى 2", r: 1/16 }, { n: "مستوى 3", r: 1/9 }
-        ];
-
-        function updateUI() {
-            document.getElementById('u-bal').innerText = bal.toFixed(5);
-            document.getElementById('p-name').innerText = pData[plan].n;
-            const now = Date.now();
-            const wait = 21600000; // 6 hours
-            if (lastM && (now - lastM < wait)) {
-                document.getElementById('m-btn').disabled = true;
-                runTimer(wait - (now - lastM));
-            } else {
-                document.getElementById('m-btn').disabled = false;
-                document.getElementById('timer-txt').innerText = "جاهز للتعدين";
-            }
-            localStorage.setItem('t_bal', bal);
-            localStorage.setItem('t_plan', plan);
-        }
-
-        function startM() {
-            bal += pData[plan].r; lastM = Date.now();
-            localStorage.setItem('t_last_m', lastM);
-            updateUI();
-            tg.HapticFeedback.impactOccurred('heavy');
-            tg.sendData(JSON.stringify({a: 'sync', b: bal, p: plan}));
-            tg.showAlert(`تم التعدين! حصلت على ${pData[plan].r.toFixed(4)} TON`);
-        }
-
-        function spin() {
-            const now = Date.now();
-            if (now - lastS < 86400000) return tg.showAlert("عد بعد 24 ساعة!");
-            document.getElementById('s-btn').disabled = true;
-            const deg = Math.floor(Math.random() * 360) + 1800;
-            document.getElementById('wheel').style.transform = `rotate(${deg}deg)`;
-            setTimeout(() => {
-                let win = Math.random() * (0.001 - 0.00001) + 0.00001;
-                bal += win; lastS = Date.now();
-                localStorage.setItem('t_last_s', lastS);
-                updateUI();
-                tg.showAlert(`🎉 ربحت ${win.toFixed(6)} TON`);
-            }, 4100);
-        }
-
-        function runTimer(ms) {
-            let s = Math.floor(ms/1000);
-            let i = setInterval(() => {
-                let h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-                document.getElementById('timer-txt').innerText = `${h}:${m}:${sec}`;
-                if (--s < 0) { clearInterval(i); updateUI(); }
-            }, 1000);
-        }
-
-        function withD() {
-            if (bal >= 1) tg.showAlert("تم إرسال طلب السحب للمراجعة.");
-            else tg.showAlert("تحتاج 1.00 TON على الأقل للسحب.");
-        }
-
-        function copyR() {
-            const link = `https://t.me/${tg.initDataUnsafe.user.id}`; // سيتم توليد الرابط الحقيقي من البوت
-            tg.showAlert("انسخ رابط الإحالة من رسالة البوت الأساسية.");
-        }
-
-        function showP(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        updateUI();
-    </script>
-</body>
-</html>
+        <div class="balance-container">
+            <img src="https://ton.org/download/ton_symbol.png">
+            <span class="balance
