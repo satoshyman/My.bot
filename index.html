@@ -3,78 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TON Mining Pro</title>
+    <title>TON Mining Platform</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --ton-blue: #0088cc; --bg-dark: #050505; --card-bg: #111; }
-        body { background: var(--bg-dark); color: #fff; font-family: sans-serif; margin: 0; padding: 0; text-align: center; overflow-x: hidden; }
-        .page { display: none; padding: 20px 5% 120px; flex-direction: column; align-items: center; }
-        .page.active { display: flex; }
-        .main-coin { width: 180px; height: 180px; border-radius: 50%; border: 4px solid var(--ton-blue); margin: 20px 0; }
-        .btn { background: var(--ton-blue); color: #fff; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; }
-        .nav-menu { position: fixed; bottom: 10px; width: 90%; left: 5%; background: #111; display: flex; justify-content: space-around; padding: 15px 0; border-radius: 20px; border: 1px solid #222; }
-        .nav-item { color: #555; font-size: 12px; cursor: pointer; }
-        .nav-item.active { color: var(--ton-blue); }
-        .card { background: var(--card-bg); width: 100%; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    </style>
-</head>
-<body>
-
-    <div style="padding: 15px; background: #000; border-bottom: 1px solid #222;">
-        <div style="display: flex; justify-content: space-around;">
-            <div>VTV: <b id="vtv-bal">0</b></div>
-            <div>TON: <b id="ton-bal">0.000</b></div>
-        </div>
-    </div>
-
-    <div id="mine-page" class="page active">
-        <h3>تعدين TON</h3>
-        <img src="https://h.top4top.io/p_3283fcc061.jpg" class="main-coin">
-        <div id="timer" style="font-size: 24px; color: var(--ton-blue); margin-bottom: 20px;">06:00:00</div>
-        <button class="btn" onclick="startMining()">ابدأ الآن</button>
-    </div>
-
-    <div id="ref-page" class="page">
-        <h3>دعوة الأصدقاء</h3>
-        <div class="card">
-            <p>اربح 10 VTV عن كل صديق</p>
-        </div>
-        <p style="font-size: 12px; color: #777;">انسخ الرابط من البوت وانشره!</p>
-    </div>
-
-    <nav class="nav-menu">
-        <div class="nav-item active" onclick="showP('mine-page', this)">تعدين</div>
-        <div class="nav-item" onclick="showP('ref-page', this)">إحالة</div>
-    </nav>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // لفتح الصفحة بكامل الشاشة
-
-        let vtv = parseFloat(localStorage.getItem('vtv')) || 1000;
-        let ton = parseFloat(localStorage.getItem('ton')) || 0;
-
-        function updateUI() {
-            document.getElementById('vtv-bal').innerText = Math.floor(vtv);
-            document.getElementById('ton-bal').innerText = ton.toFixed(3);
-            localStorage.setItem('vtv', vtv);
-            localStorage.setItem('ton', ton);
-        }
-
-        function startMining() {
-            ton += 0.025;
-            updateUI();
-            tg.showAlert("تم بدء التعدين بنجاح!");
-            tg.sendData(JSON.stringify({action: 'sync', vtv: vtv, ton: ton}));
-        }
-
-        function showP(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        updateUI();
-    </
+        body { background-color: #050505; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; text-align: center; }
+        .app-container { padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
+        .balance-box { background: #111; border: 1px solid #222; border-radius: 20px; padding: 20px; width: 90%; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .balance-box h2 { color: #0088cc; margin: 0; font-size: 28px; }
+        .coin-img { width: 180px; height: 180px; border-radius: 50%; border: 4px solid #0088cc; margin: 20px 0; box-shadow: 0 0 30px rgba(0,136,204,0.4); transition: transform 0.2s; }
+        .coin-img:active { transform: scale(0.95); }
+        .btn-mine { background: linear-gradient(4
