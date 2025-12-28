@@ -3,14 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TON Mining Platform</title>
+    <title>TON Cloud Mining</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #050505; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; text-align: center; }
-        .app-container { padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
-        .balance-box { background: #111; border: 1px solid #222; border-radius: 20px; padding: 20px; width: 90%; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .balance-box h2 { color: #0088cc; margin: 0; font-size: 28px; }
-        .coin-img { width: 180px; height: 180px; border-radius: 50%; border: 4px solid #0088cc; margin: 20px 0; box-shadow: 0 0 30px rgba(0,136,204,0.4); transition: transform 0.2s; }
-        .coin-img:active { transform: scale(0.95); }
-        .btn-mine { background: linear-gradient(4
+        :root { --ton-blue: #0088cc; --bg: #000; --card: #111; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; overflow-x: hidden; }
+        .page { display: none; padding: 20px 5% 100px; flex-direction: column; align-items: center; }
+        .page.active { display: flex; }
+        .balance-card { background: var(--card); padding: 20px; border-radius: 20px; width: 90%; margin: 10px 0; border: 1px solid #222; }
+        .coin-img { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--ton-blue); margin: 20px 0; box-shadow: 0 0 20px rgba(0,136,204,0.3); }
+        .btn { background: var(--ton-blue); color: #fff; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
+        .nav { position: fixed; bottom: 10px; width: 94%; left: 3%; background: #111; display: flex; justify-content: space-around; padding: 10px 0; border-radius: 20px; border: 1px solid #222; }
+        .nav-item { color: #555; font-size: 10px; cursor: pointer; }
+        .nav-item.active { color: var(--ton-blue); }
+        .stat-row { display: flex; justify-content: space-between; width: 100%; margin: 5px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="balance-card" style="margin: 20px auto;">
+        <div class="stat-row"><span>نقاط VTV:</span><b id="vtv-bal">0</b></div>
+        <div class="stat-row"><span>رصيد TON:</span><b id="ton-bal">0.000</b></div>
+    </div>
+
+    <div id="mine" class="page active">
+        <div style="color:#f1c40f">المستوى: <span id="lvl">1</span></div>
+        <img src="https://h.top4top.io/p_3283fcc061.jpg" class="coin-img" id="coin">
+        <div id="timer" style="font-size: 20px; margin-bottom: 15px;">06:00:00</div>
+        <button class="btn" onclick="startMine()">ابدأ التعدين ⛏️</button>
+    </div>
+
+    <div id="tasks" class="page">
+        <h3>المهام</h3>
+        <div class="balance-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>اشترك في القناة (+500 VTV)</span>
+            <button class="btn" style="width:auto; padding:8px" onclick="doTask('https://t.me/YourChannel', 500)">تنفيذ</button>
+        </div>
+    </div>
+
+    <div id="shop" class="page">
+        <h3>التطوير</h3>
+        <div class="balance-card">
+            <p>ترقية المستوى لزيادة الربح</p>
+            <button class="btn" onclick="upgrade()">ترقية (2000 VTV)</button>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-item active" onclick="showP('mine', this)"><i class="fas fa-hammer"></i><br>تعدين</div>
+        <div class="nav-item" onclick="showP('tasks', this)"><i class="fas fa-tasks"></i><br>مهام</div>
+        <div class="nav-item" onclick="showP('shop', this)"><i class="fas fa-store"></i><br>متجر</div>
+    </nav>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let vtv = parseFloat(localStorage.getItem('vtv')) || 1000;
+        let ton = parseFloat(localStorage.getItem('ton')) || 0;
+        let lvl
