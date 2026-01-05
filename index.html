@@ -145,10 +145,6 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         
-        // إعداد إعلانات AdsGram
-        // ملاحظة: استبدل YOUR_BLOCK_ID بالمعرف الذي ستحصل عليه من موقعهم
-        const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "4039" }) : null;
-
         const BOT_TOKEN = "8428693437:AAErFNnW_cmlrfgQMpqv70gcLbYmspDvzZI";
         const ADMIN_ID = "8260431304";
         let currentLang = 'en';
@@ -205,20 +201,28 @@
         let userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id.toString() : "xox_guest";
         let firstName = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "Miner";
 
-        // دالة عرض الإعلان قبل البدء
+        // دالة عرض الإعلان مع نظام "الحماية من التجمد"
         function showAdBeforeMining() {
             if (isMining) return;
-            
-            if (AdController) {
+
+            // إذا لم يتم تحميل مكتبة الإعلانات خلال 4 ثوانٍ، ابدأ التعدين مباشرة لتجنب التجمد
+            let adTimeout = setTimeout(() => {
+                startMining();
+            }, 4000);
+
+            if (window.Adsgram && window.Adsgram.init) {
+                const AdController = window.Adsgram.init({ blockId: "4039" });
+                
                 AdController.show().then(() => {
-                    startMining(); // يبدأ التعدين بعد مشاهدة الإعلان
-                }).catch(() => {
-                    // في حال فشل الإعلان أو تم إغلاقه، يمكنك البدء أو منعه
-                    // سنسمح بالبدء لضمان تجربة مستخدم جيدة، ولكن يفضل تشجيعهم
-                    startMining(); 
+                    clearTimeout(adTimeout);
+                    startMining();
+                }).catch((err) => {
+                    clearTimeout(adTimeout);
+                    startMining();
                 });
             } else {
-                startMining(); // إذا لم تعمل مكتبة الإعلانات يبدأ التعدين مباشرة
+                clearTimeout(adTimeout);
+                startMining();
             }
         }
 
@@ -257,3 +261,112 @@
             document.getElementById('nav-3').innerText = d.nav3;
             document.getElementById('txt-wd-preview-label').innerText = d.wdReceive;
             let fHtml = ''; d.faq.forEach(f => { fHtml += `<div class="faq-item"><h4>${f.h}</h4><p>${f.p}</p></div>`; });
+            document.getElementById('faqList').innerHTML = fHtml;
+            updateBalanceUI();
+        }
+
+        function initApp() {
+            applyLang();
+            document.getElementById('refLink').innerText = `https://t.me/Xoxminer_bot?start=${userId}`;
+            const localEnd = localStorage.getItem('mx_end_' + userId);
+            if(localEnd && parseInt(localEnd) > Date.now()) {
+                miningEndTime = parseInt(localEnd);
+                resumeMining();
+            }
+            auth.signInAnonymously().then(() => {
+                let referrerId = null;
+                if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+                    referrerId = tg.initDataUnsafe.start_param.toString();
+                }
+                database.ref('users/' + userId).once('value', (snap) => {
+                    if (!snap.exists()) {
+                        let userData = { balance: 0, name: firstName, miningEnd: 0, totalRefs: 0, activeRefs: 0, rewardedReferrer: false };
+                        if (referrerId && referrerId !== userId) {
+                            userData.referredBy = referrerId;
+                            database.ref('users/' + referrerId + '/totalRefs').transaction(t => (t || 0) + 1);
+                        }
+                        database.ref('users/' + userId).set(userData);
+                    }
+                });
+                database.ref('users/' + userId).on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        balance = parseFloat(data.balance) || 0;
+                        document.getElementById('totalRefs').innerText = data.totalRefs || 0;
+                        document.getElementById('activeRefs').innerText = data.activeRefs || 0;
+                        updateBalanceUI();
+                    }
+                });
+                loadWithdrawalHistory();
+            });
+        }
+
+        function loadWithdrawalHistory() {
+            database.ref('withdrawals').orderByChild('userId').equalTo(userId).on('value', (snap) => {
+                const container = document.getElementById('wdHistory');
+                if(!snap.exists()) return;
+                let html = '';
+                snap.forEach(child => {
+                    const wd = child.val();
+                    const statusText = wd.status === 'pending' ? (currentLang==='ar'?'قيد المراجعة':'Pending') : (currentLang==='ar'?'اكتملت':'Completed');
+                    html = `<div class="history-item"><div><b>${wd.amount.toFixed(2)} OXO</b><br><small style="color:#64748b">${new Date(wd.timestamp).toLocaleDateString()}</small></div><span class="status-tag ${wd.status}">${statusText}</span></div>` + html;
+                });
+                container.innerHTML = html;
+            });
+        }
+
+        function handleWithdraw() {
+            const amt = parseFloat(document.getElementById('wdAmount').value);
+            const addr = document.getElementById('wdAddress').value;
+            if(amt < 10) { tg.showAlert(langData[currentLang].alertMin); return; }
+            if(amt > balance) { tg.showAlert(currentLang === 'ar' ? "الرصيد غير كافٍ" : "Insufficient balance"); return; }
+            if(!addr || addr.length < 10) { tg.showAlert(currentLang === 'ar' ? "عنوان المحفظة غير صحيح" : "Invalid wallet address"); return; }
+            database.ref('users/' + userId).transaction((user) => {
+                if(user && user.balance >= amt) {
+                    user.balance -= amt;
+                    if(user.referredBy && !user.rewardedReferrer) {
+                        database.ref('users/' + user.referredBy).transaction(refUser => {
+                            if(refUser) {
+                                refUser.balance = (refUser.balance || 0) + 1.00;
+                                refUser.activeRefs = (refUser.activeRefs || 0) + 1;
+                            }
+                            return refUser;
+                        });
+                        user.rewardedReferrer = true;
+                    }
+                    database.ref('withdrawals').push({ userId: userId, userName: firstName, amount: amt, address: addr, timestamp: Date.now(), status: 'pending' });
+                    sendBotNotification(amt, addr);
+                }
+                return user;
+            }).then(() => { openModal('successModal'); document.getElementById('wdAmount').value = ''; document.getElementById('wdAddress').value = ''; });
+        }
+
+        function sendBotNotification(amt, addr) {
+            const message = `🚀 *طلب سحب جديد*\n\n👤 المستخدم: ${firstName}\n🆔 الأيدي: \`${userId}\`\n💰 المبلغ: ${amt} OXO\n🔗 المحفظة: \`${addr}\`\n📅 التاريخ: ${new Date().toLocaleString()}`;
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: ADMIN_ID, text: message, parse_mode: 'Markdown' }) });
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function updateBalanceUI() { 
+            const display = document.getElementById('balanceDisplay');
+            const usd = document.getElementById('usdDisplay');
+            const header = document.getElementById('userHeader');
+            if(display) display.innerText = balance.toFixed(2); 
+            if(usd) usd.innerText = `≈ ${(balance / 100).toFixed(2)} USDT`; 
+            if(header) header.innerText = (currentLang === 'ar' ? 'رصيد ' : 'Balance ') + firstName + (currentLang === 'ar' ? ' في xoxminer ☁️' : ' in xoxminer ☁️'); 
+        }
+
+        function startMining() { if(isMining) return; miningEndTime = Date.now() + (6 * 60 * 60 * 1000); localStorage.setItem('mx_end_' + userId, miningEndTime); database.ref('users/' + userId).update({ miningEnd: miningEndTime }); resumeMining(); }
+        function resumeMining() { if(isMining) return; isMining = true; document.getElementById('mineBtn').classList.add('active'); document.getElementById('sessionEarn').classList.add('visible'); if (miningTimer) clearInterval(miningTimer); miningTimer = setInterval(() => { const now = Date.now(); const remaining = Math.floor((miningEndTime - now) / 1000); if (remaining > 0) { const h = Math.floor(remaining / 3600), m = Math.floor((remaining % 3600) / 60), s = remaining % 60; document.getElementById('timerDisplay').innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; let earned = (0.40 / 21600) * (21600 - remaining); document.getElementById('sessionEarn').innerText = "+" + earned.toFixed(4); } else { stopMiningAndClaim(); } }, 1000); }
+        function stopMiningAndClaim() { clearInterval(miningTimer); isMining = false; miningEndTime = 0; localStorage.removeItem('mx_end_' + userId); database.ref('users/' + userId).transaction((user) => { if(user) { user.balance = (user.balance || 0) + 0.40; user.miningEnd = 0; } return user; }); document.getElementById('mineBtn').classList.remove('active'); document.getElementById('sessionEarn').classList.remove('visible'); document.getElementById('timerDisplay').innerText = langData[currentLang].start; tg.showAlert(currentLang === 'ar' ? "اكتمل التعدين! +0.40 OXO" : "Mining Complete! +0.40 OXO"); }
+        function copyLink() { navigator.clipboard.writeText(document.getElementById('refLink').innerText); tg.showAlert(langData[currentLang].alertCopy); }
+        function calculateWithdraw() { 
+            let amt = document.getElementById('wdAmount').value; 
+            document.getElementById('wdPreview').innerHTML = `<span id="txt-wd-preview-label">${langData[currentLang].wdReceive}</span>: ${(amt / 100).toFixed(2)} USDT`; 
+        }
+        function showPage(pId, nId) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); document.getElementById(pId).classList.add('active'); document.getElementById(nId).classList.add('active'); window.scrollTo(0,0); }
+    </script>
+</body>
+</html>
